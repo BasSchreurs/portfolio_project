@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.core.mail import send_mail
+from django.core.mail import send_mail, EmailMessage
 from django.conf import settings
 from .forms import ContactForm
 
@@ -21,10 +21,6 @@ def project2(request):
 def project3(request):
     return render(request, 'core/project3.html')
 
-from django.core.mail import send_mail
-from django.conf import settings
-from .forms import ContactForm
-
 def contact(request):
     success = False
 
@@ -32,14 +28,20 @@ def contact(request):
         form = ContactForm(request.POST)
         if form.is_valid():
             cd = form.cleaned_data
-            send_mail(
-                f"Contact Form: {cd['name']}",
-                cd['message'],
-                cd['email'],
-                ['contact@basschreurs.nl'],  # your target email
+            message_body = (
+                f"Message from: {cd['name']} <{cd['email']}>\n\n"
+                f"{cd['message']}"
             )
+            email = EmailMessage(
+                subject=f"Contact Form: {cd['name']}",
+                body=message_body,
+                from_email='contact@basschreurs.nl',
+                to=['contact@basschreurs.nl'],
+                headers={'Reply-To': cd['email']}
+            )
+            email.send()
             success = True
-            form = ContactForm()  # reset form after successful send
+            form = ContactForm()
     else:
         form = ContactForm()
 
